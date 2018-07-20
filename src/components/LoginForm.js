@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-// import { View, TextInput } from 'react-native';
+import { Text } from 'react-native';
+import firebase from 'firebase';
 
 //import all components from common folder - made possible through common/index.js
 import { Button, Card, CardSection, Input } from './common'; 
@@ -16,7 +17,24 @@ import { Button, Card, CardSection, Input } from './common';
 class LoginForm extends Component {
 
 	// add state to component
-	state = {email: '', password: ''};
+	state = {email: '', password: '', error: ''};
+
+	//authenticate user
+	onButtonPress() {
+		const {email, password} = this.state;
+		this.setState({error: ''}); //null out error on re-attempt
+
+		//returns a promise because it takes time to complete request
+		firebase.auth().signInWithEmailAndPassword(email,password)
+			.catch(() => {
+				//catch statement is what happens if it fails - if in here, signin failed
+				firebase.auth().createUserWithEmailAndPassword(email, password)
+					.catch(() => {
+						//failed to create account - show error message
+						this.setState({error: 'Authentication Failed.'});
+					});
+			});
+	}
 
 	render() {
 		return (
@@ -42,12 +60,24 @@ class LoginForm extends Component {
 					/>
 				</CardSection>
 
+				<Text style={styles.errorTextStyle}>{this.state.error}</Text>
+
 				<CardSection>
-					<Button>Login</Button>
+					<Button onPress={this.onButtonPress.bind(this)}>
+						Login
+					</Button>
 				</CardSection>
 
 			</Card>
 		);
+	}
+}
+
+const styles = {
+	errorTextStyle: {
+		fontSize: 20,
+		alignSelf: 'center',
+		color: 'red'
 	}
 }
 
